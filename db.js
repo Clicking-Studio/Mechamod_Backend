@@ -1,11 +1,7 @@
 const Pool = require("pg").Pool
 
 const pool = new Pool({
-    user: "tkhattab1999@gmail.com",
-    password: "Tremaster1",
-    database: "mechamod",
-    host: "https://mechamod-backend-v1-db.fly.dev/",
-    port: 3000
-})
+    connectionString: "postgres://default:vOJ0dtRmSr9u@ep-aged-fog-22802262-pooler.us-east-1.postgres.vercel-storage.com:5432/verceldb?sslmode=require",
+  })
 
 module.exports = pool
