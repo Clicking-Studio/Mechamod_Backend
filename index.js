@@ -44,11 +44,11 @@ app.get("/keycaps/:id", async (req, res) => {
 
 app.post("/keycaps", async (req, res) => {
 	try {
-		const { name, price, description, order_position } = req.body;
+		const { name, price, description } = req.body;
 
 		const newKeycap = await pool.query(
-			"INSERT INTO keycap (name, price, description, order_position) VALUES ($1, $2, $3, $4) RETURNING *",
-			[name, price, description, order_position],
+			"INSERT INTO keycap (name, price, description) VALUES ($1, $2, $3) RETURNING *",
+			[name, price, description],
 		);
 
 		res.json(newKeycap.rows[0]);
@@ -61,11 +61,11 @@ app.post("/keycaps", async (req, res) => {
 app.put("/keycaps/:id", async (req, res) => {
 	try {
 		const { id } = req.params;
-		const { name, price, description } = req.body;
+		const { name, price, description, order_position } = req.body;
 
 		const updateKeycap = await pool.query(
-			"UPDATE keycap SET name = $1, price = $2, description = $3 WHERE keycap_id = $4 RETURNING *",
-			[name, price, description, id],
+			"UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4 WHERE keycap_id = $5 RETURNING *",
+			[name, price, description, order_position, id],
 		);
 
 		res.json(updateKeycap.rows[0]);
