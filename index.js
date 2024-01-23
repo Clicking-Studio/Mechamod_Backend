@@ -94,11 +94,11 @@ app.delete("/keycaps/:id", async (req, res) => {
 // Add item to the cart
 app.post("/cart", async (req, res) => {
 	try {
-		const { keycap_id } = req.body;
+		const { order_position } = req.body;
 
 		const addToCart = await pool.query(
-			"UPDATE keycap SET quantity = quantity + 1 WHERE keycap_id = $1 RETURNING *",
-			[keycap_id],
+			"UPDATE keycap SET quantity = quantity + 1 WHERE order_position = $1 RETURNING *",
+			[order_position],
 		);
 
 		res.json(addToCart.rows[0]);
@@ -128,7 +128,7 @@ app.delete("/cart/:id", async (req, res) => {
 		const { id } = req.params;
 
 		const deleteCartItem = await pool.query(
-			"UPDATE keycap SET quantity = GREATEST(quantity - 1, 0) WHERE keycap_id = $1 RETURNING *",
+			"UPDATE keycap SET quantity = GREATEST(quantity - 1, 0) WHERE order_position = $1 RETURNING *",
 			[id],
 		);
 
@@ -138,6 +138,7 @@ app.delete("/cart/:id", async (req, res) => {
 		console.error(err.message);
 	}
 });
+
 
 app.listen(PORT, () => {
 	console.log(`server is online at ${PORT}`);
