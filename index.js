@@ -44,11 +44,11 @@ app.get("/keycaps/:id", async (req, res) => {
 
 app.post("/keycaps", async (req, res) => {
 	try {
-		const { name, price, description } = req.body;
+		const { name, price, description, order_position } = req.body;
 
 		const newKeycap = await pool.query(
-			"INSERT INTO keycap (name, price, description) VALUES ($1, $2, $3) RETURNING *",
-			[name, price, description],
+			"INSERT INTO keycap (name, price, description, order_position) VALUES ($1, $2, $3, $4) RETURNING *",
+			[name, price, description, order_position],
 		);
 
 		res.json(newKeycap.rows[0]);
