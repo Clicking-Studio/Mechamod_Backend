@@ -2,6 +2,8 @@ const express = require("express");
 const app = express();
 const pool = require("./db");
 const cors = require("cors");
+const multer = require('multer');
+const path = require('path');
 
 const PORT = process.env.PORT || 3000;
 
@@ -11,6 +13,46 @@ app.use(express.json()); // => req.body
 // Default endpoint
 app.get("/", (req, res) => {
 	res.send("Deployed");
+});
+
+
+// Set up storage engine
+const storage = multer.diskStorage({
+    destination: function(req, file, cb) {
+        cb(null, 'uploads/'); // Directory where files will be saved
+    },
+    filename: function(req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+    }
+});
+
+// Initialize multer
+const upload = multer({ storage });
+
+// Endpoint for uploading image
+app.post("/upload/image", upload.single('image'), async (req, res) => {
+    try {
+        const imagePath = req.file.path; // Path to the uploaded image
+        // Save imagePath to the database for the corresponding keycap record
+        // Update the keycap record in the database with the imagePath
+        res.json({ success: true, message: 'Image uploaded successfully' });
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        res.status(500).json({ success: false, message: 'Failed to upload image' });
+    }
+});
+
+// Endpoint for uploading 3D file
+app.post("/upload/file", upload.single('file'), async (req, res) => {
+    try {
+        const filePath = req.file.path; // Path to the uploaded file
+        // Save filePath to the database for the corresponding keycap record
+        // Update the keycap record in the database with the filePath
+        res.json({ success: true, message: 'File uploaded successfully' });
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        res.status(500).json({ success: false, message: 'Failed to upload file' });
+    }
 });
 
 app.get("/keycaps", async (req, res) => {
