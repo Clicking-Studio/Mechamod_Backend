@@ -2,9 +2,22 @@ const express = require("express");
 const app = express();
 const pool = require("./db");
 const cors = require("cors");
-
+const multer = require("multer");
+const path = require("path");
 
 const PORT = process.env.PORT || 3000;
+
+// Multer setup for image uploads
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, "uploads/"); // Destination folder for image uploads
+	},
+	filename: function (req, file, cb) {
+		cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
+	},
+});
+
+const upload = multer({ storage });
 
 app.use(cors());
 app.use(express.json()); // => req.body
@@ -13,9 +26,6 @@ app.use(express.json()); // => req.body
 app.get("/", (req, res) => {
 	res.send("Deployed");
 });
-
-
-
 
 app.get("/keycaps", async (req, res) => {
 	try {
@@ -46,21 +56,24 @@ app.get("/keycaps/:id", async (req, res) => {
 	}
 });
 
-app.post("/keycaps", async (req, res) => {
+// Add a new keycap
+app.post("/keycaps", upload.single("image"), async (req, res) => {
 	try {
-		const { name, price, description } = req.body;
-
-		const newKeycap = await pool.query(
-			"INSERT INTO keycap (name, price, description) VALUES ($1, $2, $3) RETURNING *",
-			[name, price, description],
-		);
-
-		res.json(newKeycap.rows[0]);
-		console.log("adding keycap");
+	  const { name, price, description } = req.body;
+	  const imagePath = req.file ? req.file.path : null; // Path to the uploaded image
+  
+	  const newKeycap = await pool.query(
+		"INSERT INTO keycap (name, price, description, image_path) VALUES ($1, $2, $3, $4) RETURNING *",
+		[name, price, description, imagePath]
+	  );
+  
+	  res.json(newKeycap.rows[0]);
+	  console.log("Adding keycap");
 	} catch (err) {
-		console.log(err.message);
+	  console.log(err.message);
+	  res.status(500).json({ error: "Internal server error" });
 	}
-});
+  });
 
 app.put("/keycaps/:id", async (req, res) => {
 	try {
