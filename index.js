@@ -4,6 +4,7 @@ const pool = require("./db");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
+const bodyParser = require("body-parser");
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,10 +18,20 @@ const storage = multer.diskStorage({
 	},
 });
 
-const upload = multer({ storage });
+const upload = multer({
+	storage: storage,
+	limits: {
+		fileSize: 10 * 1024 * 1024, // 10 MB limit (adjust as needed)
+	},
+});
 
 app.use(cors());
-app.use(express.json()); // => req.body
+app.use(express.json({ limit: '50mb' })); // Increase JSON request body limit
+// Increase payload size limit
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/uploads', express.static('uploads'));
+
 
 // Default endpoint
 app.get("/", (req, res) => {
@@ -59,38 +70,41 @@ app.get("/keycaps/:id", async (req, res) => {
 // Add a new keycap
 app.post("/keycaps", upload.single("image"), async (req, res) => {
 	try {
-	  const { name, price, description } = req.body;
-	  const imagePath = req.file ? req.file.path : null; // Path to the uploaded image
-  
-	  const newKeycap = await pool.query(
-		"INSERT INTO keycap (name, price, description, image_path) VALUES ($1, $2, $3, $4) RETURNING *",
-		[name, price, description, imagePath]
-	  );
-  
-	  res.json(newKeycap.rows[0]);
-	  console.log("Adding keycap");
-	} catch (err) {
-	  console.log(err.message);
-	  res.status(500).json({ error: "Internal server error" });
-	}
-  });
+		const { name, price, description } = req.body;
+		const imagePath = req.file ? req.file.path : null; // Path to the uploaded image
 
-app.put("/keycaps/:id", async (req, res) => {
-	try {
-		const { id } = req.params;
-		const { name, price, description, order_position } = req.body;
-
-		const updateKeycap = await pool.query(
-			"UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4 WHERE keycap_id = $5 RETURNING *",
-			[name, price, description, order_position, id],
+		const newKeycap = await pool.query(
+			"INSERT INTO keycap (name, price, description, image_path) VALUES ($1, $2, $3, $4) RETURNING *",
+			[name, price, description, imagePath]
 		);
 
-		res.json(updateKeycap.rows[0]);
-		console.log("Updating keycap");
+		res.json(newKeycap.rows[0]);
+		console.log("Adding keycap");
 	} catch (err) {
 		console.log(err.message);
+		res.status(500).json({ error: "Internal server error" });
 	}
 });
+
+app.put("/keycaps/:id", upload.single("image"), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, price, description, order_position } = req.body;
+        const imagePath = req.file ? req.file.path : null; // Path to the uploaded image
+
+        const updateKeycap = await pool.query(
+            "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, image_path = $5 WHERE keycap_id = $6 RETURNING *",
+            [name, price, description, order_position, imagePath, id],
+        );
+
+        res.json(updateKeycap.rows[0]);
+        console.log("Updating keycap");
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 
 app.delete("/keycaps/:id", async (req, res) => {
 	try {
