@@ -8,6 +8,6 @@ CREATE TABLE keycap(
     price INT,
     description VARCHAR(255),
     order_position INT,
-    image_path VARCHAR(255),
+    image_path VARCHAR(512),
     quantity INT DEFAULT 0
 );
