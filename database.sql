@@ -9,5 +9,6 @@ CREATE TABLE keycap(
     description VARCHAR(255),
     order_position INT,
     image_path VARCHAR(255),
+    stl_path VARCHAR(255),
     quantity INT DEFAULT 0
 );

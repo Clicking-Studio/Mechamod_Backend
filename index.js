@@ -3,27 +3,18 @@ const app = express();
 const pool = require("./db");
 const cors = require("cors");
 const multer = require("multer");
-const path = require("path");
 const bodyParser = require("body-parser");
+const uploadFileToS3 = require("./AWS_S3_OPERATIONS/s3FileUploader");
 
 const PORT = process.env.PORT || 3000;
 
-// Multer setup for image uploads
-const storage = multer.diskStorage({
-	destination: function (req, file, cb) {
-		cb(null, "uploads/"); // Destination folder for image uploads
-	},
-	filename: function (req, file, cb) {
-		cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-	},
-});
-
+const storage = multer.memoryStorage();
 const upload = multer({
-	storage: storage,
-	limits: {
-		fileSize: 10 * 1024 * 1024, // 10 MB limit (adjust as needed)
-	},
-});
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB limit
+  }
+}).array("files", 2); // Allow up to 2 files
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Increase JSON request body limit
@@ -68,14 +59,28 @@ app.get("/keycaps/:id", async (req, res) => {
 });
 
 // Add a new keycap
-app.post("/keycaps", upload.single("image"), async (req, res) => {
-	try {
-		const { name, price, description } = req.body;
-		const imagePath = req.file ? req.file.path : null; // Path to the uploaded image
+app.post("/keycaps", upload, async (req, res) => {
+  try {
+    let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
+    let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+    
+    for (const file of req.files) {
+      const uploadedFile = await uploadFileToS3(file);
+
+      if (file.mimetype.startsWith("image")) {
+        imageobj = uploadedFile;
+      } else {
+        stlfileobj = uploadedFile;
+      }
+    }
+
+    const { name, price, description } = req.body;
+    const imagePath = imageobj.url; // Path to the uploaded image
+    const stlPath = stlfileobj.url; // Path to the uploaded stl
 
 		const newKeycap = await pool.query(
-			"INSERT INTO keycap (name, price, description, image_path) VALUES ($1, $2, $3, $4) RETURNING *",
-			[name, price, description, imagePath]
+			"INSERT INTO keycap (name, price, description, image_path, stl_path) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+			[name, price, description, imagePath, stlPath]
 		);
 
 		res.json(newKeycap.rows[0]);
@@ -86,25 +91,37 @@ app.post("/keycaps", upload.single("image"), async (req, res) => {
 	}
 });
 
-app.put("/keycaps/:id", upload.single("image"), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { name, price, description, order_position } = req.body;
-        const imagePath = req.file ? req.file.path : null; // Path to the uploaded image
+app.put("/keycaps/:id", upload, async (req, res) => {
+  try {
+  let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
+  let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+  
+      for (const file of req.files) {
+        const uploadedFile = await uploadFileToS3(file);
+  
+        if (file.mimetype.startsWith("image")) {
+          imageobj = uploadedFile;
+        } else {
+          stlfileobj = uploadedFile;
+        }
+      }
+      const { id } = req.params;
+      const { name, price, description, order_position } = req.body;
+      const imagePath = imageobj.url; // Path to the uploaded image
+      const stlPath = stlfileobj.url; // Path to the uploaded stl
 
-        const updateKeycap = await pool.query(
-            "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, image_path = $5 WHERE keycap_id = $6 RETURNING *",
-            [name, price, description, order_position, imagePath, id],
-        );
+      const updateKeycap = await pool.query(
+          "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, image_path = $5, stl_path = $6 WHERE keycap_id = $7 RETURNING *",
+          [name, price, description, order_position, imagePath, stlPath, id],
+      );
 
-        res.json(updateKeycap.rows[0]);
-        console.log("Updating keycap");
-    } catch (err) {
-        console.log(err.message);
-        res.status(500).json({ error: "Internal server error" });
-    }
+      res.json(updateKeycap.rows[0]);
+      console.log("Updating keycap");
+  } catch (err) {
+      console.log(err.message);
+      res.status(500).json({ error: "Internal server error" });
+  }
 });
-
 
 app.delete("/keycaps/:id", async (req, res) => {
 	try {
