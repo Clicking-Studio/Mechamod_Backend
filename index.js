@@ -195,7 +195,7 @@ app.delete("/cart/:id", async (req, res) => {
         const cartID = `guest-${sessionID}`;
 
         const deleteCartItem = await pool.query(
-            "UPDATE keycap SET quantity = GREATEST(quantity - 1, 0) WHERE order_position = $1 AND cart_id = $2 RETURNING *",
+            "UPDATE keycap SET quantity = GREATEST(quantity - 1, 0) WHERE keycap_id = $1 AND cart_id = $2 RETURNING *",
             [id, cartID],
         );
 
@@ -206,6 +206,7 @@ app.delete("/cart/:id", async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 });
+
 
 
 app.listen(PORT, () => {

@@ -12,3 +12,10 @@ CREATE TABLE keycap(
     stl_path VARCHAR(255),
     quantity INT DEFAULT 0
 );
+
+CREATE TABLE cart (
+    id SERIAL PRIMARY KEY,
+    cart_id VARCHAR(255) NOT NULL,
+    keycap_id INT REFERENCES keycap(keycap_id),
+    quantity INT DEFAULT 0
+);
