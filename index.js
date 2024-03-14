@@ -7,9 +7,8 @@ const bodyParser = require("body-parser");
 const session = require('express-session');
 const crypto = require('crypto');
 
-
 if (process.env.NODE_ENV !== "PRODUCTION") {
-	require("dotenv").config();
+    require("dotenv").config();
 }
 
 // Load environment variables from .env file
@@ -21,10 +20,10 @@ const PORT = process.env.PORT || 3000;
 
 const storage = multer.memoryStorage();
 const upload = multer({
-	storage: storage,
-	limits: {
-		fileSize: 50 * 1024 * 1024, // 50 MB limit
-	},
+    storage: storage,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50 MB limit
+    },
 }).array("files", 2); // Allow up to 2 files
 
 app.use(cors());
@@ -49,138 +48,121 @@ app.use(session({
     saveUninitialized: false
 }));
 
-app.post('/login', (req, res) => {
-    // Assuming user ID is stored in req.body.userId
-    req.session.userId = req.body.userId;
-    res.send('Login successful');
-});
-
-app.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            console.error(err);
-            res.status(500).send('Error logging out');
-        } else {
-            res.send('Logout successful');
-        }
-    });
-});
-
-
-
 // Default endpoint
 app.get("/", (req, res) => {
-	res.send("Deployed");
+    res.send("Deployed");
 });
 
 app.get("/keycaps", async (req, res) => {
-	try {
-		const allKeycaps = await pool.query("SELECT * FROM keycap");
-		res.json(allKeycaps.rows);
-		console.log("Refreshing keycaps");
-	} catch (err) {
-		console.log(err);
-	}
+    try {
+        const allKeycaps = await pool.query("SELECT * FROM keycap");
+        res.json(allKeycaps.rows);
+        console.log("Refreshing keycaps");
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 app.get("/keycaps/:id", async (req, res) => {
-	try {
-		const { id } = req.params;
-		const keycap = await pool.query(
-			"SELECT * FROM keycap WHERE keycap_id = $1",
-			[id],
-		);
+    try {
+        const { id } = req.params;
+        const keycap = await pool.query(
+            "SELECT * FROM keycap WHERE keycap_id = $1",
+            [id],
+        );
 
-		if (keycap.rows.length === 0) {
-			res.status(404).json({ error: "Keycap not found" });
-		} else {
-			res.json(keycap.rows[0]);
-		}
-	} catch (err) {
-		console.log(err.message);
-		res.status(500).json({ error: "Internal server error" });
-	}
+        if (keycap.rows.length === 0) {
+            res.status(404).json({ error: "Keycap not found" });
+        } else {
+            res.json(keycap.rows[0]);
+        }
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 // Add a new keycap
 app.post("/keycaps", upload, async (req, res) => {
-	try {
-		let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
-		let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+    try {
+        let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
+        let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
 
-		for (const file of req.files) {
-			const uploadedFile = await uploadFileToS3(file);
+        for (const file of req.files) {
+            const uploadedFile = await uploadFileToS3(file);
 
-			if (file.mimetype.startsWith("image")) {
-				imageobj = uploadedFile;
-			} else {
-				stlfileobj = uploadedFile;
-			}
-		}
+            if (file.mimetype.startsWith("image")) {
+                imageobj = uploadedFile;
+            } else {
+                stlfileobj = uploadedFile;
+            }
+        }
 
-		const { name, price, description } = req.body;
-		const imagePath = imageobj.url; // Path to the uploaded image
-		const stlPath = stlfileobj.url; // Path to the uploaded stl
+        const { name, price, description } = req.body;
+        const imagePath = imageobj.url; // Path to the uploaded image
+        const stlPath = stlfileobj.url; // Path to the uploaded stl
 
-		const newKeycap = await pool.query(
-			"INSERT INTO keycap (name, price, description, image_path, stl_path) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-			[name, price, description, imagePath, stlPath],
-		);
+        const newKeycap = await pool.query(
+            "INSERT INTO keycap (name, price, description, image_path, stl_path) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+            [name, price, description, imagePath, stlPath],
+        );
 
-		res.json(newKeycap.rows[0]);
-		console.log("Adding keycap");
-	} catch (err) {
-		console.log(err.message);
-		res.status(500).json({ error: "Internal server error" });
-	}
+        res.json(newKeycap.rows[0]);
+        console.log("Adding keycap");
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 app.put("/keycaps/:id", upload, async (req, res) => {
-	try {
-		let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
-		let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+    try {
+        let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
+        let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
 
-		for (const file of req.files) {
-			const uploadedFile = await uploadFileToS3(file);
+        for (const file of req.files) {
+            const uploadedFile = await uploadFileToS3(file);
 
-			if (file.mimetype.startsWith("image")) {
-				imageobj = uploadedFile;
-			} else {
-				stlfileobj = uploadedFile;
-			}
-		}
-		const { id } = req.params;
-		const { name, price, description, order_position } = req.body;
-		const imagePath = imageobj.url; // Path to the uploaded image
-		const stlPath = stlfileobj.url; // Path to the uploaded stl
+            if (file.mimetype.startsWith("image")) {
+                imageobj = uploadedFile;
+            } else {
+                stlfileobj = uploadedFile;
+            }
+        }
+        const { id } = req.params;
+        const { name, price, description, order_position } = req.body;
+        const imagePath = imageobj.url; // Path to the uploaded image
+        const stlPath = stlfileobj.url; // Path to the uploaded stl
 
-		const updateKeycap = await pool.query(
-			"UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, image_path = $5, stl_path = $6 WHERE keycap_id = $7 RETURNING *",
-			[name, price, description, order_position, imagePath, stlPath, id],
-		);
+        const updateKeycap = await pool.query(
+            "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, image_path = $5, stl_path = $6 WHERE keycap_id = $7 RETURNING *",
+            [name, price, description, order_position, imagePath, stlPath, id],
+        );
 
-		res.json(updateKeycap.rows[0]);
-		console.log("Updating keycap");
-	} catch (err) {
-		console.log(err.message);
-		res.status(500).json({ error: "Internal server error" });
-	}
+        res.json(updateKeycap.rows[0]);
+        console.log("Updating keycap");
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 app.delete("/keycaps/:id", async (req, res) => {
-	try {
-		const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-		const deleteKeycap = await pool.query(
-			"DELETE FROM keycap WHERE keycap_id = $1",
-			[id],
-		);
+        const deleteKeycap = await pool.query(
+            "DELETE FROM keycap WHERE keycap_id = $1",
+            [id],
+        );
 
-		res.json("keycap was successfully deleted");
-		console.log("deleting keycap");
-	} catch (err) {
-		console.log(err.message);
-	}
+        res.json("keycap was successfully deleted");
+        console.log("deleting keycap");
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 // Add item to the cart
@@ -242,12 +224,6 @@ app.delete("/cart/:id", async (req, res) => {
     }
 });
 
-
-
 app.listen(PORT, () => {
-	console.log(`server is online at ${PORT}`);
+    console.log(`server is online at ${PORT}`);
 });
-
-// app.listen({ port: PORT, host: "0.0.0.0" }, () => {
-// 	console.log(`Server is online at ${PORT}`);
-// });
