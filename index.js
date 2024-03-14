@@ -4,6 +4,9 @@ const pool = require("./db");
 const cors = require("cors");
 const multer = require("multer");
 const bodyParser = require("body-parser");
+const session = require('express-session');
+const crypto = require('crypto');
+
 
 if (process.env.NODE_ENV !== "PRODUCTION") {
 	require("dotenv").config();
@@ -30,6 +33,40 @@ app.use(express.json({ limit: "50mb" })); // Increase JSON request body limit
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/uploads", express.static("uploads"));
+
+const generateRandomString = (length) => {
+    return crypto.randomBytes(Math.ceil(length / 2))
+        .toString('hex')
+        .slice(0, length);
+};
+
+const secretKey = generateRandomString(32); // Generate a 32-character random string
+console.log(secretKey);
+
+app.use(session({
+    secret: secretKey,
+    resave: false,
+    saveUninitialized: false
+}));
+
+app.post('/login', (req, res) => {
+    // Assuming user ID is stored in req.body.userId
+    req.session.userId = req.body.userId;
+    res.send('Login successful');
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error(err);
+            res.status(500).send('Error logging out');
+        } else {
+            res.send('Logout successful');
+        }
+    });
+});
+
+
 
 // Default endpoint
 app.get("/", (req, res) => {
