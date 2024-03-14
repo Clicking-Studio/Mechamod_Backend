@@ -149,19 +149,17 @@ app.delete("/keycaps/:id", async (req, res) => {
 // Add item to the cart
 app.post("/cart", async (req, res) => {
     try {
-        const { order_position } = req.body;
+        const { keycap_id } = req.body;
         const sessionID = req.sessionID; // Get session ID
-        
-        // Create a unique cart identifier for guest users
         const cartID = `guest-${sessionID}`;
 
         const addToCart = await pool.query(
-            "UPDATE keycap SET quantity = quantity + 1 WHERE order_position = $1 AND cart_id = $2 RETURNING *",
-            [order_position, cartID],
+            "UPDATE cart SET quantity = quantity + 1 WHERE keycap_id = $1 AND cart_id = $2 RETURNING *",
+            [keycap_id, cartID],
         );
 
         res.json(addToCart.rows[0]);
-        console.log(`Adding ${addToCart.rows[0].name} to cart for session ${sessionID}`);
+        console.log(`Adding item to cart for session ${sessionID}`);
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: "Server Error" });
@@ -175,7 +173,7 @@ app.get("/cart", async (req, res) => {
         const cartID = `guest-${sessionID}`;
 
         const cartContents = await pool.query(
-            "SELECT * FROM keycap WHERE quantity > 0 AND cart_id = $1",
+            "SELECT * FROM cart WHERE quantity > 0 AND cart_id = $1",
             [cartID],
         );
 
@@ -195,7 +193,7 @@ app.delete("/cart/:id", async (req, res) => {
         const cartID = `guest-${sessionID}`;
 
         const deleteCartItem = await pool.query(
-            "UPDATE keycap SET quantity = GREATEST(quantity - 1, 0) WHERE keycap_id = $1 AND cart_id = $2 RETURNING *",
+            "UPDATE cart SET quantity = GREATEST(quantity - 1, 0) WHERE keycap_id = $1 AND cart_id = $2 RETURNING *",
             [id, cartID],
         );
 
