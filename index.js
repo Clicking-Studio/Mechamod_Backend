@@ -148,51 +148,65 @@ app.delete("/keycaps/:id", async (req, res) => {
 
 // Add item to the cart
 app.post("/cart", async (req, res) => {
-	try {
-		const { order_position } = req.body;
+    try {
+        const { order_position } = req.body;
+        const sessionID = req.sessionID; // Get session ID
+        
+        // Create a unique cart identifier for guest users
+        const cartID = `guest-${sessionID}`;
 
-		const addToCart = await pool.query(
-			"UPDATE keycap SET quantity = quantity + 1 WHERE order_position = $1 RETURNING *",
-			[order_position],
-		);
+        const addToCart = await pool.query(
+            "UPDATE keycap SET quantity = quantity + 1 WHERE order_position = $1 AND cart_id = $2 RETURNING *",
+            [order_position, cartID],
+        );
 
-		res.json(addToCart.rows[0]);
-		console.log(`Adding ${addToCart.rows[0].name} to cart`);
-	} catch (err) {
-		console.error(err.message);
-	}
+        res.json(addToCart.rows[0]);
+        console.log(`Adding ${addToCart.rows[0].name} to cart for session ${sessionID}`);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ message: "Server Error" });
+    }
 });
 
 // Get cart contents
 app.get("/cart", async (req, res) => {
-	try {
-		const cartContents = await pool.query(
-			"SELECT * FROM keycap WHERE quantity > 0",
-		);
+    try {
+        const sessionID = req.sessionID; // Get session ID
+        const cartID = `guest-${sessionID}`;
 
-		res.json(cartContents.rows);
-		console.log("Fetching cart contents");
-	} catch (err) {
-		console.error(err.message);
-	}
+        const cartContents = await pool.query(
+            "SELECT * FROM keycap WHERE quantity > 0 AND cart_id = $1",
+            [cartID],
+        );
+
+        res.json(cartContents.rows);
+        console.log(`Fetching cart contents for session ${sessionID}`);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ message: "Server Error" });
+    }
 });
 
 // Remove item from the cart
 app.delete("/cart/:id", async (req, res) => {
-	try {
-		const { id } = req.params;
+    try {
+        const { id } = req.params;
+        const sessionID = req.sessionID; // Get session ID
+        const cartID = `guest-${sessionID}`;
 
-		const deleteCartItem = await pool.query(
-			"UPDATE keycap SET quantity = GREATEST(quantity - 1, 0) WHERE order_position = $1 RETURNING *",
-			[id],
-		);
+        const deleteCartItem = await pool.query(
+            "UPDATE keycap SET quantity = GREATEST(quantity - 1, 0) WHERE order_position = $1 AND cart_id = $2 RETURNING *",
+            [id, cartID],
+        );
 
-		res.json("Item removed from cart");
-		console.log("Removing item from cart");
-	} catch (err) {
-		console.error(err.message);
-	}
+        res.json("Item removed from cart");
+        console.log(`Removing item from cart for session ${sessionID}`);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ message: "Server Error" });
+    }
 });
+
 
 app.listen(PORT, () => {
 	console.log(`server is online at ${PORT}`);
