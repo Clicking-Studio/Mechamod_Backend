@@ -202,15 +202,18 @@ app.post("/addToCart", async (req, res) => {
     }
 });
 
-// Get cart contents
+// Get cart contents with keycap details
 app.get("/getCart", async (req, res) => {
     try {
         const sessionID = req.sessionID; // Get session ID
         const cartID = `guest-${sessionID}`;
 
         const cartContents = await pool.query(
-            "SELECT * FROM cart WHERE quantity > 0 AND cart_id = $1",
-            [cartID],
+            "SELECT c.id, c.keycap_id, k.name, k.price, k.image_path " +
+            "FROM cart c " +
+            "INNER JOIN keycap k ON c.keycap_id = k.keycap_id " +
+            "WHERE c.quantity > 0 AND c.cart_id = $1",
+            [cartID]
         );
 
         res.json(cartContents.rows);
@@ -220,6 +223,7 @@ app.get("/getCart", async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 });
+
 
 //get all carts 
 app.get("/getAllCarts", async (req, res) => {
