@@ -166,27 +166,44 @@ app.delete("/keycaps/:id", async (req, res) => {
 });
 
 // Add item to the cart
-app.post("/cart", async (req, res) => {
+app.post("/addToCart", async (req, res) => {
     try {
         const { keycap_id } = req.body;
         const sessionID = req.sessionID; // Get session ID
         const cartID = `guest-${sessionID}`;
 
-        const addToCart = await pool.query(
-            "UPDATE cart SET quantity = quantity + 1 WHERE keycap_id = $1 AND cart_id = $2 RETURNING *",
-            [keycap_id, cartID],
+        // Check if the item is already in the cart
+        const cartItem = await pool.query(
+            "SELECT * FROM cart WHERE keycap_id = $1 AND cart_id = $2",
+            [keycap_id, cartID]
         );
 
-        res.json(addToCart.rows[0]);
-        console.log(`Adding item to cart for session ${sessionID}`);
+        if (cartItem.rowCount > 0) {
+            // If the item is already in the cart, update its quantity
+            await pool.query(
+                "UPDATE cart SET quantity = quantity + 1 WHERE keycap_id = $1 AND cart_id = $2",
+                [keycap_id, cartID]
+            );
+            console.log(`Quantity updated for item ${keycap_id} in cart for session ${sessionID}`);
+        } else {
+            // If the item is not in the cart, insert a new entry
+            await pool.query(
+                "INSERT INTO cart (cart_id, keycap_id, quantity) VALUES ($1, $2, 1)",
+                [cartID, keycap_id]
+            );
+            console.log(`Item ${keycap_id} added to cart for session ${sessionID}`);
+        }
+
+        // Respond with success message
+        res.status(200).json({ message: "Item added to cart successfully" });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ message: "Server Error" });
+        console.error("Error adding item to cart:", err.message);
+        res.status(500).json({ message: "Failed to add item to cart" });
     }
 });
 
 // Get cart contents
-app.get("/cart", async (req, res) => {
+app.get("/getCart", async (req, res) => {
     try {
         const sessionID = req.sessionID; // Get session ID
         const cartID = `guest-${sessionID}`;
@@ -204,20 +221,58 @@ app.get("/cart", async (req, res) => {
     }
 });
 
+//get all carts 
+app.get("/getAllCarts", async (req, res) => {
+    try {
+        const cartContents = await pool.query(
+            "SELECT * FROM cart"
+        );
+
+        res.json(cartContents.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
 // Remove item from the cart
 app.delete("/cart/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const sessionID = req.sessionID; // Get session ID
-        const cartID = `guest-${sessionID}`;
-
+        const { cart_id } = req.query
         const deleteCartItem = await pool.query(
-            "UPDATE cart SET quantity = GREATEST(quantity - 1, 0) WHERE keycap_id = $1 AND cart_id = $2 RETURNING *",
-            [id, cartID],
+            "DELETE FROM cart WHERE id = $1 AND cart_id = $2 RETURNING *",
+            [id, cart_id],
         );
 
-        res.json("Item removed from cart");
-        console.log(`Removing item from cart for session ${sessionID}`);
+        if (deleteCartItem.rowCount > 0) {
+            res.json({ message: "Item removed from cart" });
+            console.log(`Removing item with ID ${id} from cart with cartId ${cart_id}`);
+        } else {
+            res.status(404).json({ message: "Item not found in cart" });
+        }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+//update cart
+app.put("/cart/:cartId/:itemId", async (req, res) => {
+    try {
+        const { cartId, itemId } = req.params;
+        const { quantity } = req.body;
+
+        const updateCartItem = await pool.query(
+            "UPDATE cart SET quantity = $1 WHERE id = $2 AND cart_id = $3 RETURNING *",
+            [quantity, itemId, cartId]
+        );
+
+        if (updateCartItem.rowCount > 0) {
+            res.json({ message: "Cart item updated successfully", updatedItem: updateCartItem.rows[0] });
+        } else {
+            res.status(404).json({ message: "Item not found in cart" });
+        }
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: "Server Error" });
