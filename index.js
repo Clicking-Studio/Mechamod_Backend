@@ -6,6 +6,7 @@ const multer = require("multer");
 const bodyParser = require("body-parser");
 const session = require('express-session');
 const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid'); // Import UUID library
 
 if (process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config();
@@ -45,7 +46,7 @@ console.log(secretKey);
 app.use(session({
     secret: secretKey,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: true
 }));
 
 // Default endpoint
@@ -165,55 +166,63 @@ app.delete("/keycaps/:id", async (req, res) => {
     }
 });
 
-// Add item to the cart
+
 app.post("/addToCart", async (req, res) => {
     try {
         const { keycap_id } = req.body;
-        const sessionID = req.sessionID; // Get session ID
-        const cartID = `guest-${sessionID}`;
+        const sessionID = req.sessionID; // Get session ID from the request session
 
-        // Check if the item is already in the cart
-        const cartItem = await pool.query(
-            "SELECT * FROM cart WHERE keycap_id = $1 AND cart_id = $2",
-            [keycap_id, cartID]
+        // Generate a UUID for cart_id
+        const cart_id = uuidv4();
+
+        // Check if the item is already in the user's cart
+        const existingCartItem = await pool.query(
+            "SELECT * FROM cart WHERE keycap_id = $1 AND session_id = $2",
+            [keycap_id, sessionID]
         );
 
-        if (cartItem.rowCount > 0) {
-            // If the item is already in the cart, update its quantity
-            await pool.query(
-                "UPDATE cart SET quantity = quantity + 1 WHERE keycap_id = $1 AND cart_id = $2",
-                [keycap_id, cartID]
-            );
-            console.log(`Quantity updated for item ${keycap_id} in cart for session ${sessionID}`);
+        if (existingCartItem.rowCount > 0) {
+            // If the item is already in the user's cart, return a message
+            return res.status(400).json({ message: "Item already exists in your cart" });
         } else {
-            // If the item is not in the cart, insert a new entry
+            // Fetch information about the keycap
+            const keycapInfo = await pool.query(
+                "SELECT name, price, description, image_path FROM keycap WHERE keycap_id = $1",
+                [keycap_id]
+            );
+
+            if (keycapInfo.rowCount === 0) {
+                // If keycap with given ID does not exist, return an error message
+                return res.status(404).json({ message: "Keycap not found" });
+            }
+
+            // If the item is not in the user's cart, insert a new entry
             await pool.query(
-                "INSERT INTO cart (cart_id, keycap_id, quantity) VALUES ($1, $2, 1)",
-                [cartID, keycap_id]
+                "INSERT INTO cart (cart_id, session_id, keycap_id, quantity) VALUES ($1, $2, $3, 1)",
+                [cart_id, sessionID, keycap_id]
             );
             console.log(`Item ${keycap_id} added to cart for session ${sessionID}`);
-        }
 
-        // Respond with success message
-        res.status(200).json({ message: "Item added to cart successfully" });
+            // Respond with success message and keycap information
+            return res.status(200).json({
+                message: "Item added to cart successfully",
+                keycap: keycapInfo.rows[0]
+            });
+        }
     } catch (err) {
         console.error("Error adding item to cart:", err.message);
         res.status(500).json({ message: "Failed to add item to cart" });
     }
 });
 
-// Get cart contents with keycap details
+// Get cart contents
 app.get("/getCart", async (req, res) => {
     try {
         const sessionID = req.sessionID; // Get session ID
-        const cartID = `guest-${sessionID}`;
 
         const cartContents = await pool.query(
-            "SELECT c.id, c.keycap_id, k.name, k.price, k.image_path " +
-            "FROM cart c " +
-            "INNER JOIN keycap k ON c.keycap_id = k.keycap_id " +
-            "WHERE c.quantity > 0 AND c.cart_id = $1",
-            [cartID]
+            "SELECT cart.*, keycap.name, keycap.price, keycap.description, keycap.image_path FROM cart INNER JOIN keycap ON cart.keycap_id = keycap.keycap_id WHERE cart.quantity > 0 AND cart.session_id = $1",
+            [sessionID],
         );
 
         res.json(cartContents.rows);
@@ -280,6 +289,19 @@ app.put("/cart/:cartId/:itemId", async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: "Server Error" });
+    }
+});
+
+app.delete("/deleteAllCarts", async (req, res) => {
+    try {
+        // Delete all carts
+        await pool.query("DELETE FROM cart");
+
+        // Respond with success message
+        res.status(200).json({ message: "All carts deleted successfully" });
+    } catch (err) {
+        console.error("Error deleting carts:", err.message);
+        res.status(500).json({ message: "Failed to delete carts" });
     }
 });
 
