@@ -17,5 +17,6 @@ CREATE TABLE cart (
     id SERIAL PRIMARY KEY,
     cart_id VARCHAR(255) NOT NULL,
     keycap_id INT REFERENCES keycap(keycap_id),
-    quantity INT DEFAULT 0
+    quantity INT DEFAULT 0,
+    session_id VARCHAR(255) NOT NULL
 );

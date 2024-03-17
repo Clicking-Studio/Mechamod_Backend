@@ -169,16 +169,13 @@ app.delete("/keycaps/:id", async (req, res) => {
 
 app.post("/addToCart", async (req, res) => {
     try {
-        const { keycap_id } = req.body;
-        const sessionID = req.sessionID; // Get session ID from the request session
-
-        // Generate a UUID for cart_id
-        const cart_id = uuidv4();
+        const { keycap_id, session_id } = req.body;
+        // const sessionID = req.sessionID; // Get session ID from the request session
 
         // Check if the item is already in the user's cart
         const existingCartItem = await pool.query(
             "SELECT * FROM cart WHERE keycap_id = $1 AND session_id = $2",
-            [keycap_id, sessionID]
+            [keycap_id, session_id]
         );
 
         if (existingCartItem.rowCount > 0) {
@@ -196,12 +193,12 @@ app.post("/addToCart", async (req, res) => {
                 return res.status(404).json({ message: "Keycap not found" });
             }
 
-            // If the item is not in the user's cart, insert a new entry
+            // Insert a new entry into the cart with the session ID
             await pool.query(
-                "INSERT INTO cart (cart_id, session_id, keycap_id, quantity) VALUES ($1, $2, $3, 1)",
-                [cart_id, sessionID, keycap_id]
+                "INSERT INTO cart (session_id, keycap_id, quantity) VALUES ($1, $2, 1)",
+                [session_id, keycap_id]
             );
-            console.log(`Item ${keycap_id} added to cart for session ${sessionID}`);
+            console.log(`Item ${keycap_id} added to cart for session ${session_id}`);
 
             // Respond with success message and keycap information
             return res.status(200).json({
@@ -215,18 +212,20 @@ app.post("/addToCart", async (req, res) => {
     }
 });
 
+
 // Get cart contents
 app.get("/getCart", async (req, res) => {
     try {
-        const sessionID = req.sessionID; // Get session ID
+        const { session_id } = req.query;
+        // const sessionID = req.sessionID; // Get session ID
 
         const cartContents = await pool.query(
             "SELECT cart.*, keycap.name, keycap.price, keycap.description, keycap.image_path FROM cart INNER JOIN keycap ON cart.keycap_id = keycap.keycap_id WHERE cart.quantity > 0 AND cart.session_id = $1",
-            [sessionID],
+            [session_id],
         );
 
         res.json(cartContents.rows);
-        console.log(`Fetching cart contents for session ${sessionID}`);
+        console.log(`Fetching cart contents for session ${session_id}`);
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: "Server Error" });
