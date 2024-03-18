@@ -247,27 +247,29 @@ app.get("/getAllCarts", async (req, res) => {
     }
 });
 
-// Remove item from the cart
-app.delete("/cart/:id", async (req, res) => {
+// Remove item from the cart based on keycap_id and session_id
+app.delete("/cart/:keycap_id", async (req, res) => {
     try {
-        const { id } = req.params;
-        const { cart_id } = req.query
+        const { keycap_id } = req.params;
+        const { session_id } = req.query;
+
         const deleteCartItem = await pool.query(
-            "DELETE FROM cart WHERE id = $1 AND cart_id = $2 RETURNING *",
-            [id, cart_id],
+            "DELETE FROM cart WHERE keycap_id = $1 AND session_id = $2 RETURNING *",
+            [keycap_id, session_id],
         );
 
         if (deleteCartItem.rowCount > 0) {
-            res.json({ message: "Item removed from cart" });
-            console.log(`Removing item with ID ${id} from cart with cartId ${cart_id}`);
+            res.json({ message: `Keycap ${keycap_id} removed from cart for session ${session_id}` });
+            console.log(`Removing keycap ${keycap_id} from cart for session ${session_id}`);
         } else {
-            res.status(404).json({ message: "Item not found in cart" });
+            res.status(404).json({ message: `Keycap ${keycap_id} not found in cart for session ${session_id}` });
         }
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ message: "Server Error" });
     }
 });
+
 
 //update cart
 app.put("/cart/:cartId/:itemId", async (req, res) => {
