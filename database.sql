@@ -20,3 +20,10 @@ CREATE TABLE cart (
     quantity INT DEFAULT 0,
     session_id VARCHAR(255) NOT NULL
 );
+
+CREATE TABLE logs (
+    id SERIAL PRIMARY KEY,
+    action VARCHAR(255) NOT NULL,
+    keycap_name VARCHAR(255) NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

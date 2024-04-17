@@ -342,7 +342,7 @@ app.post("/logs", async (req, res) => {
 
 app.get("/logs", async (req, res) => {
     try {
-        const logs = await pool.query("SELECT * FROM logs ORDER BY created_at DESC");
+        const logs = await pool.query("SELECT * FROM logs ORDER BY timestamp DESC");
         res.json(logs.rows);
         console.log("Logs fetched successfully");
     } catch (err) {
@@ -350,8 +350,6 @@ app.get("/logs", async (req, res) => {
         res.status(500).json({ message: "Failed to fetch logs" });
     }
 });
-
-
 
 app.listen(PORT, () => {
     console.log(`server is online at ${PORT}`);
