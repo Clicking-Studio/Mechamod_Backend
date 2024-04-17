@@ -153,18 +153,34 @@ app.delete("/keycaps/:id", async (req, res) => {
     try {
         const { id } = req.params;
 
-        const deleteKeycap = await pool.query(
-            "DELETE FROM keycap WHERE keycap_id = $1",
-            [id],
+        const keycap = await pool.query(
+            "SELECT * FROM keycap WHERE keycap_id = $1",
+            [id]
         );
 
-        res.json("keycap was successfully deleted");
-        console.log("deleting keycap");
+        if (keycap.rows.length === 0) {
+            return res.status(404).json({ error: "Keycap not found" });
+        }
+
+        const deletedKeycap = await pool.query(
+            "DELETE FROM keycap WHERE keycap_id = $1 RETURNING *",
+            [id]
+        );
+
+        // Log keycap deletion
+        await pool.query(
+            "INSERT INTO logs (action, keycap_name) VALUES ($1, $2)",
+            ['Deleted', keycap.rows[0].name]
+        );
+
+        res.json({ message: `Keycap ${id} deleted successfully` });
+        console.log("Keycap deleted successfully");
     } catch (err) {
-        console.log(err.message);
+        console.error("Error deleting keycap:", err.message);
         res.status(500).json({ error: "Internal server error" });
     }
 });
+
 
 
 app.post("/addToCart", async (req, res) => {
@@ -305,6 +321,25 @@ app.delete("/deleteAllCarts", async (req, res) => {
         res.status(500).json({ message: "Failed to delete carts" });
     }
 });
+
+// Log keycap actions
+app.post("/logs", async (req, res) => {
+    try {
+        const { action, keycap_name } = req.body;
+
+        const newLog = await pool.query(
+            "INSERT INTO logs (action, keycap_name) VALUES ($1, $2) RETURNING *",
+            [action, keycap_name]
+        );
+
+        res.status(201).json(newLog.rows[0]);
+        console.log("Log created successfully");
+    } catch (err) {
+        console.error("Error creating log:", err.message);
+        res.status(500).json({ message: "Failed to create log" });
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`server is online at ${PORT}`);
