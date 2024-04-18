@@ -100,13 +100,13 @@ app.post("/keycaps", upload, async (req, res) => {
             }
         }
 
-        const { name, price, description } = req.body;
+        const { name, price, description, bullet1, bullet2, bullet3, bullet4 } = req.body;
         const imagePath = imageobj.url; // Path to the uploaded image
         const stlPath = stlfileobj.url; // Path to the uploaded stl
 
         const newKeycap = await pool.query(
-            "INSERT INTO keycap (name, price, description, image_path, stl_path) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-            [name, price, description, imagePath, stlPath],
+            "INSERT INTO keycap (name, price, description, bullet1, bullet2, bullet3, bullet4, image_path, stl_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
+            [name, price, description, bullet1, bullet2, bullet3, bullet4, imagePath, stlPath],
         );
 
         res.json(newKeycap.rows[0]);
@@ -131,14 +131,15 @@ app.put("/keycaps/:id", upload, async (req, res) => {
                 stlfileobj = uploadedFile;
             }
         }
+        
         const { id } = req.params;
-        const { name, price, description, order_position } = req.body;
+        const { name, price, description, order_position, bullet1, bullet2, bullet3, bullet4 } = req.body;
         const imagePath = imageobj.url; // Path to the uploaded image
         const stlPath = stlfileobj.url; // Path to the uploaded stl
 
         const updateKeycap = await pool.query(
-            "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, image_path = $5, stl_path = $6 WHERE keycap_id = $7 RETURNING *",
-            [name, price, description, order_position, imagePath, stlPath, id],
+            "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, bullet1 = $5, bullet2 = $6, bullet3 = $7, bullet4 = $8, image_path = $9, stl_path = $10 WHERE keycap_id = $11 RETURNING *",
+            [name, price, description, order_position, bullet1, bullet2, bullet3, bullet4, imagePath, stlPath, id],
         );
 
         res.json(updateKeycap.rows[0]);
@@ -148,6 +149,7 @@ app.put("/keycaps/:id", upload, async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
+
 
 app.delete("/keycaps/:id", async (req, res) => {
     try {
@@ -180,8 +182,6 @@ app.delete("/keycaps/:id", async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
-
-
 
 app.post("/addToCart", async (req, res) => {
     try {
@@ -228,7 +228,6 @@ app.post("/addToCart", async (req, res) => {
     }
 });
 
-
 // Get cart contents
 app.get("/getCart", async (req, res) => {
     try {
@@ -247,7 +246,6 @@ app.get("/getCart", async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 });
-
 
 //get all carts 
 app.get("/getAllCarts", async (req, res) => {
@@ -285,7 +283,6 @@ app.delete("/cart/:keycap_id", async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 });
-
 
 //update cart
 app.put("/cart/:cartId/:itemId", async (req, res) => {
@@ -350,6 +347,8 @@ app.get("/logs", async (req, res) => {
         res.status(500).json({ message: "Failed to fetch logs" });
     }
 });
+
+
 
 app.listen(PORT, () => {
     console.log(`server is online at ${PORT}`);
