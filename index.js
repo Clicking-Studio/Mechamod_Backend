@@ -119,8 +119,8 @@ app.post("/keycaps", upload, async (req, res) => {
 
 app.put("/keycaps/:id", upload, async (req, res) => {
     try {
-        let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
-        let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+        let imageobj = {}; // Will contain the URL and the name of the image file that will be uploaded to S3 bucket
+        let stlfileobj = {}; // Will contain the URL and the name of the STL file that will be uploaded to S3 bucket
 
         for (const file of req.files) {
             const uploadedFile = await uploadFileToS3(file);
@@ -134,8 +134,18 @@ app.put("/keycaps/:id", upload, async (req, res) => {
         
         const { id } = req.params;
         const { name, price, description, order_position, bullet1, bullet2, bullet3, bullet4 } = req.body;
-        const imagePath = imageobj.url; // Path to the uploaded image
-        const stlPath = stlfileobj.url; // Path to the uploaded stl
+
+        let imagePath = null; // Initialize imagePath to null
+        if (imageobj.url) {
+            // Use the uploaded image URL only if a new image was uploaded
+            imagePath = imageobj.url;
+        } else {
+            // Retrieve the existing image path from the database if no new image was uploaded
+            const existingKeycap = await pool.query("SELECT image_path FROM keycap WHERE keycap_id = $1", [id]);
+            imagePath = existingKeycap.rows[0].image_path;
+        }
+
+        const stlPath = stlfileobj.url; // Path to the uploaded STL file
 
         const updateKeycap = await pool.query(
             "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, bullet1 = $5, bullet2 = $6, bullet3 = $7, bullet4 = $8, image_path = $9, stl_path = $10 WHERE keycap_id = $11 RETURNING *",
@@ -149,7 +159,6 @@ app.put("/keycaps/:id", upload, async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
-
 
 app.delete("/keycaps/:id", async (req, res) => {
     try {
