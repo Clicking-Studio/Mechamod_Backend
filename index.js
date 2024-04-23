@@ -90,15 +90,17 @@ app.post("/keycaps", upload, async (req, res) => {
         let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
         let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
         let backgroundobj = {}; // will contain the URL and the name of the background file that will be uploaded to S3 bucket
-        
+
         for (const file of req.files) {
             const uploadedFile = await uploadFileToS3(file);
 
-            if (file.fieldname === "image") {
+            if (file.mimetype.startsWith("image")) {
                 imageobj = uploadedFile;
-            } else if (file.fieldname === "stl") {
-                stlFileobj = uploadedFile;
-            } else if (file.fieldname === "background") {
+            } 
+            else if (file.mimetype.startsWith("stl")) {
+                stlfileobj = uploadedFile;
+            }
+            else if (file.mimetype.startsWith("background")) {
                 backgroundobj = uploadedFile;
             }
         }
