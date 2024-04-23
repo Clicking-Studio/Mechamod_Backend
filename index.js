@@ -89,24 +89,30 @@ app.post("/keycaps", upload, async (req, res) => {
     try {
         let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
         let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+        let backgroundobj = {}; // will contain the URL and the name of the background file that will be uploaded to S3 bucket
 
         for (const file of req.files) {
             const uploadedFile = await uploadFileToS3(file);
 
             if (file.mimetype.startsWith("image")) {
                 imageobj = uploadedFile;
-            } else {
+            } 
+            else if (file.mimetype.startsWith("stl")) {
                 stlfileobj = uploadedFile;
+            }
+            else if (file.mimetype.startsWith("background")) {
+                backgroundobj = uploadedFile;
             }
         }
 
         const { name, price, description, bullet1, bullet2, bullet3, bullet4 } = req.body;
         const imagePath = imageobj.url; // Path to the uploaded image
         const stlPath = stlfileobj.url; // Path to the uploaded stl
+        const backgroundPath = backgroundobj.url // path to the uploaded background 
 
         const newKeycap = await pool.query(
-            "INSERT INTO keycap (name, price, description, bullet1, bullet2, bullet3, bullet4, image_path, stl_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
-            [name, price, description, bullet1, bullet2, bullet3, bullet4, imagePath, stlPath],
+            "INSERT INTO keycap (name, price, description, bullet1, bullet2, bullet3, bullet4, image_path, stl_path, background_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+            [name, price, description, bullet1, bullet2, bullet3, bullet4, imagePath, stlPath, backgroundPath],
         );
 
         res.json(newKeycap.rows[0]);
@@ -121,14 +127,19 @@ app.put("/keycaps/:id", upload, async (req, res) => {
     try {
         let imageobj = {}; // Will contain the URL and the name of the image file that will be uploaded to S3 bucket
         let stlfileobj = {}; // Will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+        let backgroundobj = {}; // Will contain the URL and the name of the background file that will be uploaded to S3 bucket
 
         for (const file of req.files) {
             const uploadedFile = await uploadFileToS3(file);
 
             if (file.mimetype.startsWith("image")) {
                 imageobj = uploadedFile;
-            } else {
+            } 
+            else if (file.mimetype.startsWith("stl")) {
                 stlfileobj = uploadedFile;
+            }
+            else if (file.mimetype.startsWith("background")) {
+                backgroundobj = uploadedFile;
             }
         }
         
@@ -147,9 +158,19 @@ app.put("/keycaps/:id", upload, async (req, res) => {
 
         const stlPath = stlfileobj.url; // Path to the uploaded STL file
 
+        let backgroundPath = null; // Initialize backgroundPath to null
+        if (backgroundobj.url) {
+            // Use the uploaded image URL only if a new image was uploaded
+            backgroundPath = backgroundobj.url;
+        } else {
+            // Retrieve the existing image path from the database if no new image was uploaded
+            const existingKeycap = await pool.query("SELECT background_path FROM keycap WHERE keycap_id = $1", [id]);
+            backgroundPath = existingKeycap.rows[0].background_path;
+        }
+
         const updateKeycap = await pool.query(
-            "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, bullet1 = $5, bullet2 = $6, bullet3 = $7, bullet4 = $8, image_path = $9, stl_path = $10 WHERE keycap_id = $11 RETURNING *",
-            [name, price, description, order_position, bullet1, bullet2, bullet3, bullet4, imagePath, stlPath, id],
+            "UPDATE keycap SET name = $1, price = $2, description = $3, order_position = $4, bullet1 = $5, bullet2 = $6, bullet3 = $7, bullet4 = $8, image_path = $9, stl_path = $10, background_path = $11 WHERE keycap_id = $12 RETURNING *",
+            [name, price, description, order_position, bullet1, bullet2, bullet3, bullet4, imagePath, stlPath, backgroundPath, id],
         );
 
         res.json(updateKeycap.rows[0]);

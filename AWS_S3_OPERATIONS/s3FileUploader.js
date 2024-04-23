@@ -18,9 +18,14 @@ const uploadFileToS3 = async (file) => {
   if (file.mimetype.startsWith("image")) {
     keyPrefix = "images";
     fileGetURLPrefix = config.imageURL;
-  } else {
+  } 
+  else if (file.mimetype.startsWith("stl")) {
     keyPrefix = "stl";
     fileGetURLPrefix = config.stlURL;
+  }
+  else if (file.mimetype.startsWith("background")) {
+    keyPrefix = "backgrounds";
+    fileGetURLPrefix = config.backgroundURL;
   }
 
   // Construct the S3 key for the file
