@@ -85,34 +85,20 @@ app.get("/keycaps/:id", async (req, res) => {
 });
 
 // Add a new keycap
-app.post("/keycaps", upload, async (req, res) => {
+app.post("/keycaps", async (req, res) => {
     try {
-        let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
-        let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
-        let backgroundobj = {}; // will contain the URL and the name of the background file that will be uploaded to S3 bucket
-
-        for (const file of req.files) {
-            const uploadedFile = await uploadFileToS3(file);
-
-            if (file.mimetype.startsWith("image")) {
-                imageobj = uploadedFile;
-            } 
-            else if (file.mimetype.startsWith("stl")) {
-                stlfileobj = uploadedFile;
-            }
-            else if (file.mimetype.startsWith("background")) {
-                backgroundobj = uploadedFile;
-            }
-        }
-
         const { name, price, description, bullet1, bullet2, bullet3, bullet4 } = req.body;
-        const imagePath = imageobj.url; // Path to the uploaded image
-        const stlPath = stlfileobj.url; // Path to the uploaded stl
-        const backgroundPath = backgroundobj.url // path to the uploaded background 
+        const imageFile = req.files.find(file => file.mimetype.startsWith("image"));
+        const backgroundFile = req.files.find(file => file.mimetype.startsWith("background"));
 
+        // Upload image and background files to S3
+        const imagePath = await uploadFileToS3(imageFile, 'images');
+        const backgroundPath = await uploadFileToS3(backgroundFile, 'backgrounds');
+
+        // Insert new keycap into database with file paths
         const newKeycap = await pool.query(
-            "INSERT INTO keycap (name, price, description, bullet1, bullet2, bullet3, bullet4, image_path, stl_path, background_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
-            [name, price, description, bullet1, bullet2, bullet3, bullet4, imagePath, stlPath, backgroundPath],
+            "INSERT INTO keycap (name, price, description, bullet1, bullet2, bullet3, bullet4, image_path, background_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
+            [name, price, description, bullet1, bullet2, bullet3, bullet4, imagePath, backgroundPath]
         );
 
         res.json(newKeycap.rows[0]);
