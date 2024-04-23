@@ -13,6 +13,7 @@ const config = {
   s3BucketFolderName: process.env.S3_BUCKET_FOLDER_NAME || "", // S3 bucket folder name
   imageURL: process.env.IMAGE_URL || "", // Base URL for image files
   stlURL: process.env.STL_URL || "", // Base URL for STL files
+  backgroundURL: process.env.BACKGROUND_URL || "", // Base URL for background files
 };
 
 // Export the configuration object for use in other parts of the application
