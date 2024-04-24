@@ -6,25 +6,33 @@ const multer = require("multer");
 const bodyParser = require("body-parser");
 const session = require('express-session');
 const crypto = require('crypto');
-const { uploadImageOnS3 } = require('./AWS_S3_OPERATIONS/s3FileUploader');
+const { v4: uuidv4 } = require('uuid'); // Import UUID library
 
 if (process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config();
 }
 
-const config = require('../Mechamod_Backend/config/config');
+// Load environment variables from .env file
+const uploadFileToS3 = require("./AWS_S3_OPERATIONS/s3FileUploader");
+
+console.log(process.env.REGION);
+
 const PORT = process.env.PORT || 3000;
-//test
+
 const storage = multer.memoryStorage();
-const upload = multer();
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50 MB limit
+    },
+}).array("files", 2); // Allow up to 2 files
 
 app.use(cors());
-app.use(express.json({ limit: "50mb" }));
+app.use(express.json({ limit: "50mb" })); // Increase JSON request body limit
+// Increase payload size limit
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/uploads", express.static("uploads"));
-app.use(express.json());
-app.use(upload.any());
 
 const generateRandomString = (length) => {
     return crypto.randomBytes(Math.ceil(length / 2))
@@ -77,39 +85,30 @@ app.get("/keycaps/:id", async (req, res) => {
 });
 
 // Add a new keycap
-app.post("/keycaps", async (req, res) => {
+app.post("/keycaps", upload, async (req, res) => {
     try {
-        let image, stlImage, backgroundImg
+        let imageobj = {}; // will contain the URL and the name of the image file that will be uploaded to S3 bucket
+        let stlfileobj = {}; // will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+        let backgroundobj = {}; // will contain the URL and the name of the background file that will be uploaded to S3 bucket
 
-        if (req.files && req.files.length > 0) {
-            for (const file of req.files) {
-             if (file.fieldname === "image") {
-                const uploadedImg = await uploadImageOnS3(
-                  [file],
-                  "imageses"
-                );
-                image = uploadedImg ? config.imageURL + '/' + uploadedImg: null
-              } else if (file.fieldname === "background") {
-                const uploadedBackgroundPhoto = await uploadImageOnS3(
-                  [file],
-                  "backgrounds"
-                );
-                backgroundImg = uploadedBackgroundPhoto ? config.backgroundURL + '/' + uploadedBackgroundPhoto : null
-                }
-                else if (file.fieldname === "stl") {
-                    const uploadedStlPhoto = await uploadImageOnS3(
-                      [file],
-                      "stl"
-                    );
-                    stlImage = uploadedStlPhoto ? config.stlURL + '/' + uploadedStlPhoto : null
-                    };
+        for (const file of req.files) {
+            const uploadedFile = await uploadFileToS3(file);
+
+            if (file.mimetype.startsWith("image")) {
+                imageobj = uploadedFile;
+            } 
+            else if (file.mimetype.startsWith("stl")) {
+                stlfileobj = uploadedFile;
             }
-          }
+            else if (file.mimetype.startsWith("background")) {
+                backgroundobj = uploadedFile;
+            }
+        }
 
         const { name, price, description, bullet1, bullet2, bullet3, bullet4 } = req.body;
-        const imagePath = image // Path to the uploaded image
-        const stlPath = stlImage; // Path to the uploaded stl
-        const backgroundPath = backgroundImg // path to the uploaded background 
+        const imagePath = imageobj.url; // Path to the uploaded image
+        const stlPath = stlfileobj.url; // Path to the uploaded stl
+        const backgroundPath = backgroundobj.url // path to the uploaded background 
 
         const newKeycap = await pool.query(
             "INSERT INTO keycap (name, price, description, bullet1, bullet2, bullet3, bullet4, image_path, stl_path, background_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
@@ -124,56 +123,45 @@ app.post("/keycaps", async (req, res) => {
     }
 });
 
-app.put("/keycaps/:id", async (req, res) => {
+app.put("/keycaps/:id", upload, async (req, res) => {
     try {
-        let imageobj = null; // Will contain the URL and the name of the image file that will be uploaded to S3 bucket
-        let stlfileobj = null; // Will contain the URL and the name of the STL file that will be uploaded to S3 bucket
-        let backgroundobj = null; // Will contain the URL and the name of the background file that will be uploaded to S3 bucket
+        let imageobj = {}; // Will contain the URL and the name of the image file that will be uploaded to S3 bucket
+        let stlfileobj = {}; // Will contain the URL and the name of the STL file that will be uploaded to S3 bucket
+        let backgroundobj = {}; // Will contain the URL and the name of the background file that will be uploaded to S3 bucket
 
-        if (req.files && req.files.length > 0) {
-            for (const file of req.files) {
-             if (file.fieldname === "image") {
-                const uploadedImg = await uploadImageOnS3(
-                  [file],
-                  "images"
-                );
-                imageobj = uploadedImg ? config.imageURL + '/' + uploadedImg: null
-              } else if (file.fieldname === "background") {
-                const uploadedBackgroundPhoto = await uploadImageOnS3(
-                  [file],
-                  "backgrounds"
-                );
-                backgroundobj = uploadedBackgroundPhoto ? config.backgroundURL + '/' + uploadedBackgroundPhoto : null
-                }
-                else if (file.fieldname === "stl") {
-                    const uploadedStlPhoto = await uploadImageOnS3(
-                      [file],
-                      "stl"
-                    );
-                    stlfileobj = uploadedStlPhoto ? config.stlURL + '/' + uploadedStlPhoto : null
-                    };
+        for (const file of req.files) {
+            const uploadedFile = await uploadFileToS3(file);
+
+            if (file.mimetype.startsWith("image")) {
+                imageobj = uploadedFile;
+            } 
+            else if (file.mimetype.startsWith("stl")) {
+                stlfileobj = uploadedFile;
             }
-          }
+            else if (file.mimetype.startsWith("background")) {
+                backgroundobj = uploadedFile;
+            }
+        }
         
         const { id } = req.params;
         const { name, price, description, order_position, bullet1, bullet2, bullet3, bullet4 } = req.body;
 
         let imagePath = null; // Initialize imagePath to null
-        if (imageobj) {
+        if (imageobj.url) {
             // Use the uploaded image URL only if a new image was uploaded
-            imagePath = imageobj
+            imagePath = imageobj.url;
         } else {
             // Retrieve the existing image path from the database if no new image was uploaded
             const existingKeycap = await pool.query("SELECT image_path FROM keycap WHERE keycap_id = $1", [id]);
             imagePath = existingKeycap.rows[0].image_path;
         }
 
-        const stlPath = stlfileobj; // Path to the uploaded STL file
+        const stlPath = stlfileobj.url; // Path to the uploaded STL file
 
         let backgroundPath = null; // Initialize backgroundPath to null
-        if (backgroundobj) {
+        if (backgroundobj.url) {
             // Use the uploaded image URL only if a new image was uploaded
-            backgroundPath = backgroundobj
+            backgroundPath = backgroundobj.url;
         } else {
             // Retrieve the existing image path from the database if no new image was uploaded
             const existingKeycap = await pool.query("SELECT background_path FROM keycap WHERE keycap_id = $1", [id]);
