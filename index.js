@@ -13,7 +13,7 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 }
 
 const config = require('../Mechamod_Backend/config/config');
-const PORT = process.env.PORT || 3005;
+const PORT = process.env.PORT || 3000;
 
 const storage = multer.memoryStorage();
 const upload = multer();
