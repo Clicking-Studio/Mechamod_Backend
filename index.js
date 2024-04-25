@@ -12,7 +12,7 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config();
 }
 
-const config = require('../Mechamod_Backend/config/config');
+const config = require('./config/config');
 console.log(`config`, config)
 console.log(`imageurl`, config.imageURL)
 console.log(`backgroundurl`, config.backgroundURL)
