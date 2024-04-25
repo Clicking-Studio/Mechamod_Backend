@@ -83,11 +83,14 @@ app.post("/keycaps", async (req, res) => {
 
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
+             console.log("🚀 ~ app.post ~ req.files:", req.files)
              if (file.fieldname === "image") {
                 const uploadedImg = await uploadImageOnS3(
                   [file],
-                  "imageses"
+                  "images"
                 );
+                console.log("🚀 ~ app.post ~ uploadedImg:", uploadedImg)
+
                 image = uploadedImg ? config.imageURL + '/' + uploadedImg: null
               } else if (file.fieldname === "background") {
                 const uploadedBackgroundPhoto = await uploadImageOnS3(
@@ -137,7 +140,9 @@ app.put("/keycaps/:id", async (req, res) => {
                   [file],
                   "images"
                 );
+                console.log("uploaded image",uploadedImg);
                 imageobj = uploadedImg ? config.imageURL + '/' + uploadedImg: null
+                console.log("imagesssojb",imageobj);
               } else if (file.fieldname === "background") {
                 const uploadedBackgroundPhoto = await uploadImageOnS3(
                   [file],
@@ -157,15 +162,18 @@ app.put("/keycaps/:id", async (req, res) => {
         
         const { id } = req.params;
         const { name, price, description, order_position, bullet1, bullet2, bullet3, bullet4 } = req.body;
+        console.log("🚀 ~ app.put ~ req.body:", req.body)
 
         let imagePath = null; // Initialize imagePath to null
         if (imageobj) {
             // Use the uploaded image URL only if a new image was uploaded
             imagePath = imageobj
+            console.log("🚀 ~ app.put ~ imagePath:", imagePath)
         } else {
             // Retrieve the existing image path from the database if no new image was uploaded
             const existingKeycap = await pool.query("SELECT image_path FROM keycap WHERE keycap_id = $1", [id]);
             imagePath = existingKeycap.rows[0].image_path;
+            console.log("🚀 ~ app.put esting~ imagePath:", imagePath)
         }
 
         const stlPath = stlfileobj; // Path to the uploaded STL file
