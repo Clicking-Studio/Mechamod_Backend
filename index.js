@@ -13,6 +13,9 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 }
 
 const config = require('../Mechamod_Backend/config/config');
+console.log(`config`, config)
+console.log(`imageurl`, config.imageURL)
+console.log(`backgroundurl`, config.backgroundURL)
 const PORT = process.env.PORT || 3000;
 
 const storage = multer.memoryStorage();
@@ -90,7 +93,7 @@ app.post("/keycaps", async (req, res) => {
                   "images"
                 );
                 console.log("🚀 ~ app.post ~ uploadedImg:", uploadedImg)
-
+                
                 image = uploadedImg ? config.imageURL + '/' + uploadedImg: null
               } else if (file.fieldname === "background") {
                 const uploadedBackgroundPhoto = await uploadImageOnS3(

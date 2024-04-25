@@ -1,8 +1,8 @@
 // // Import necessary module for environment variable configuration
-// const dotenv = require("dotenv");
+const dotenv = require("dotenv");
 
-// // // Load environment variables from .env file
-// dotenv.config();
+// // Load environment variables from .env file
+dotenv.config();
 
 // Configuration object with AWS and S3-related settings
 const config = {
