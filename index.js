@@ -19,7 +19,10 @@ console.log(`backgroundurl`, config.backgroundURL)
 const PORT = process.env.PORT || 3000;
 
 const storage = multer.memoryStorage();
-const upload = multer();
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 50 * 1024 * 1024 } // 50 MB file size limit
+    })
 
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
