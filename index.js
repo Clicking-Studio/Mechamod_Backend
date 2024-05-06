@@ -24,10 +24,22 @@ const upload = multer({
     limits: { fileSize: 50 * 1024 * 1024 } // 50 MB file size limit
     })
 
-// Enable CORS middleware with specific origins
-app.use(cors({
-    origin: ["https://mechamod-admin.vercel.app", "https://mechamod.vercel.app"]
-  }));
+// Basic CORS configuration allowing all origins
+app.use(cors());
+
+// OR Specify custom CORS options
+const corsOptions = {
+origin: ["https://mechamod-admin.vercel.app", "https://mechamod.vercel.app"], // Allow requests from this origin
+methods: ['GET', 'POST','PUT','DELETE'], // Allow these HTTP methods
+allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+credentials: true, // Allow cookies to be sent with the request
+maxAge: 86400, // Cache the preflight response for 1 day (86400 seconds)
+preflightContinue: false, // If true, preflight requests will be passed through to the next handler
+optionsSuccessStatus: 200 // Return successful status code for OPTIONS requests
+};
+
+// Enable CORS with custom options
+app.use(cors(corsOptions));
   
 app.use(express.json({ limit: "50mb" }));
 app.use(bodyParser.json({ limit: "50mb" }));
