@@ -24,7 +24,11 @@ const upload = multer({
     limits: { fileSize: 50 * 1024 * 1024 } // 50 MB file size limit
     })
 
-app.use(cors());
+// Enable CORS middleware with specific origins
+app.use(cors({
+    origin: ["https://mechamod-admin.vercel.app", "https://mechamod.vercel.app"]
+  }));
+  
 app.use(express.json({ limit: "50mb" }));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
