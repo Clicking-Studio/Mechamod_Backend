@@ -12,6 +12,7 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config();
 }
 
+
 const config = require('./config/config');
 console.log(`config`, config)
 console.log(`imageurl`, config.imageURL)
@@ -29,9 +30,9 @@ app.use(cors());
 
 // OR Specify custom CORS options
 const corsOptions = {
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-    origin: 'https://mechamod-admin.vercel.app',
-    allowedHeaders: 'Content-Type,Authorization',
+    origin: 'https://mechamod-admin.vercel.app', // Allow requests from this origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specified HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'],
     };
     app.use(cors(corsOptions));
     app.use(function (request, response, next) {
