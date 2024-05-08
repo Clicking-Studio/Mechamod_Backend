@@ -29,7 +29,7 @@ app.use(cors());
 
 // OR Specify custom CORS options
 const corsOptions = {
-origin: ["https://mechamod-admin.vercel.app", "https://mechamod.vercel.app"], // Allow requests from this origin
+origin: ["https://mechamod-admin.vercel.app", "https://mechamod.vercel.app", "http://127.0.0.1:5500"], // Allow requests from this origin
 methods: ['GET', 'POST','PUT','DELETE'], // Allow these HTTP methods
 allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
 credentials: true, // Allow cookies to be sent with the request
