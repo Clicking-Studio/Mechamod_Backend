@@ -29,11 +29,11 @@ app.use(cors());
 
 // OR Specify custom CORS options
 const corsOptions = {
-    origin: "*",
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    origin: 'https://mechamod-admin.vercel.app',
+    allowedHeaders: 'Content-Type,Authorization',
     };
     app.use(cors(corsOptions));
-    app.options('*', cors());
     app.use(function (request, response, next) {
     response.header("Access-Control-Allow-Origin", "*");
     response.header(
