@@ -22,15 +22,12 @@ const PORT = process.env.PORT || 3000;
 const storage = multer.memoryStorage();
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 } // 50 MB file size limit
+    limits: { fileSize: 100 * 1024 * 1024 } // 100 MB file size limit
     })
-
-// Basic CORS configuration allowing all origins
-app.use(cors());
 
 // OR Specify custom CORS options
 const corsOptions = {
-    origin: 'https://mechamod-admin.vercel.app', // Allow requests from this origin
+    origin: ['https://mechamod-admin.vercel.app'], // Allow requests from this origin
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specified HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'],
     };
