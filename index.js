@@ -31,7 +31,6 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specified HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'],
     };
-    app.use(cors(corsOptions));
     app.use(function (request, response, next) {
     response.header("Access-Control-Allow-Origin", "*");
     response.header(
