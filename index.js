@@ -29,14 +29,20 @@ app.use(cors());
 
 // OR Specify custom CORS options
 const corsOptions = {
-origin: ["https://mechamod-admin.vercel.app", "https://mechamod.vercel.app", "http://127.0.0.1:5500"], // Allow requests from this origin
-methods: ['GET', 'POST','PUT','DELETE'], // Allow these HTTP methods
-allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
-credentials: true, // Allow cookies to be sent with the request
-maxAge: 86400, // Cache the preflight response for 1 day (86400 seconds)
-preflightContinue: false, // If true, preflight requests will be passed through to the next handler
-optionsSuccessStatus: 200 // Return successful status code for OPTIONS requests
-};
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    };
+    app.use(cors(corsOptions));
+    app.options('*', cors());
+    app.use(function (request, response, next) {
+    response.header("Access-Control-Allow-Origin", "*");
+    response.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    next();
+    });
 
 // Enable CORS with custom options
 app.use(cors(corsOptions));
