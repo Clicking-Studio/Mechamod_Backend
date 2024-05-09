@@ -25,11 +25,18 @@ const upload = multer({
     limits: { fileSize: 100 * 1024 * 1024 } // 100 MB file size limit
     })
 
-const corsOptions = {
-    origin: "*",
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    // Configure CORS options
+    const corsOptions = {
+        origin: ['https://mechamod-admin.vercel.app', 'https://mechamod-admin-panel.vercel.app'], // Allow requests from these origins
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+        optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+        credentials: true // Allow credentials (e.g., cookies, authorization headers)
     };
+
+    // Use CORS middleware with the specified options
     app.use(cors(corsOptions));
+
+    // Allow CORS preflight requests for all routes
     app.options('*', cors());
     app.use(function (request, response, next) {
     response.header("Access-Control-Allow-Origin", "*");
