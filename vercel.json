@@ -14,7 +14,7 @@
 			"Access-Control-Allow-Origin": "https://mechamod-admin.vercel.app",
 			"Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 			"Access-Control-Allow-Headers": "Content-Type, Authorization",
-			"methods": ["GET","HEAD","PUT","PATCH","POST","DELETE"],
+			"methods": ["GET","HEAD","PUT","PATCH,POST,DELETE"],
 			"Access-Control-Allow-Credentials": true
 		  }
 	  }
