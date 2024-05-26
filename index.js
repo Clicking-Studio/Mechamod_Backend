@@ -23,36 +23,27 @@ const storage = multer.memoryStorage();
 const upload = multer({
     storage: storage,
     limits: { fileSize: 100 * 1024 * 1024 } // 100 MB file size limit
-    })
+})
 
-    // Configure CORS options
-    const corsOptions = {
-        origin: ['https://mechamod-admin.vercel.app', 'https://mechamod-admin-panel.vercel.app'], // Allow requests from these origins
-        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-        optionsSuccessStatus: 200, // Some legacy browsers choke on 204
-        credentials: true // Allow credentials (e.g., cookies, authorization headers)
-    };
+// Configure CORS options
+const corsOptions = {
+    origin: ['https://mechamod-admin.vercel.app', 'https://mechamod-admin-panel.vercel.app'],
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    optionsSuccessStatus: 200,
+    credentials: true
+};
 
-    // Use CORS middleware with the specified options
-    app.use(cors(corsOptions));
+// Use CORS middleware with the specified options
+app.use(cors(corsOptions));
 
-    // Allow CORS preflight requests for all routes
-    app.options('*', cors());
-    app.use(function (request, response, next) {
-    response.header("Access-Control-Allow-Origin", "*");
-    response.header(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept"
-    );
-    response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    next();
-    });
-  
+// Allow CORS preflight requests for all routes
+app.options('*', cors(corsOptions));
+
+// Increase payload size limit
 app.use(express.json({ limit: "50mb" }));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 app.use("/uploads", express.static("uploads"));
-app.use(express.json());
 app.use(upload.any());
 
 const generateRandomString = (length) => {
@@ -113,7 +104,7 @@ app.post("/keycaps", async (req, res) => {
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
              console.log("🚀 ~ app.post ~ req.files:", req.files)
-             if (file.fieldname === "image") {
+                if (file.fieldname === "image") {
                 const uploadedImg = await uploadImageOnS3(
                   [file],
                   "images"
@@ -121,7 +112,7 @@ app.post("/keycaps", async (req, res) => {
                 console.log("🚀 ~ app.post ~ uploadedImg:", uploadedImg)
                 
                 image = uploadedImg ? config.imageURL + '/' + uploadedImg: null
-              } else if (file.fieldname === "background") {
+                } else if (file.fieldname === "background") {
                 const uploadedBackgroundPhoto = await uploadImageOnS3(
                   [file],
                   "backgrounds"
@@ -136,12 +127,12 @@ app.post("/keycaps", async (req, res) => {
                     stlImage = uploadedStlPhoto ? config.stlURL + '/' + uploadedStlPhoto : null
                     };
             }
-          }
+        }
 
         const { name, price, description, bullet1, bullet2, bullet3, bullet4 } = req.body;
         const imagePath = image // Path to the uploaded image
         const stlPath = stlImage; // Path to the uploaded stl
-        const backgroundPath = backgroundImg // path to the uploaded background 
+        const backgroundPath = backgroundImg // path to the uploaded background
 
         const newKeycap = await pool.query(
             "INSERT INTO keycap (name, price, description, bullet1, bullet2, bullet3, bullet4, image_path, stl_path, background_path) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
@@ -164,7 +155,7 @@ app.put("/keycaps/:id", async (req, res) => {
 
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
-             if (file.fieldname === "image") {
+                if (file.fieldname === "image") {
                 const uploadedImg = await uploadImageOnS3(
                   [file],
                   "images"
@@ -172,7 +163,7 @@ app.put("/keycaps/:id", async (req, res) => {
                 console.log("uploaded image",uploadedImg);
                 imageobj = uploadedImg ? config.imageURL + '/' + uploadedImg: null
                 console.log("imagesssojb",imageobj);
-              } else if (file.fieldname === "background") {
+                } else if (file.fieldname === "background") {
                 const uploadedBackgroundPhoto = await uploadImageOnS3(
                   [file],
                   "backgrounds"
@@ -187,8 +178,8 @@ app.put("/keycaps/:id", async (req, res) => {
                     stlfileobj = uploadedStlPhoto ? config.stlURL + '/' + uploadedStlPhoto : null
                     };
             }
-          }
-        
+        }
+
         const { id } = req.params;
         const { name, price, description, order_position, bullet1, bullet2, bullet3, bullet4 } = req.body;
         console.log("🚀 ~ app.put ~ req.body:", req.body)
