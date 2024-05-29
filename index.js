@@ -27,7 +27,7 @@ const upload = multer({
 
 // Configure CORS options
 const corsOptions = {
-    origin: ['https://mechamod-admin.vercel.app', 'https://mechamod-admin-panel.vercel.app'],
+    origin: ['http://127.0.0.1:5500','https://mechamod-admin.vercel.app', 'https://mechamod-admin-panel.vercel.app'],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     optionsSuccessStatus: 200,
     credentials: true
@@ -64,7 +64,7 @@ app.use(session({
 // Default endpoint
 app.get("/", (req, res) => {
     res.send("Deployed");
-});
+  });
 
 app.get("/keycaps", async (req, res) => {
     try {
