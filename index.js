@@ -1,5 +1,5 @@
 const express = require("express");
-const app = express();
+const https = require("https");
 const pool = require("./db");
 const cors = require("cors");
 const multer = require("multer");
@@ -12,12 +12,11 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config();
 }
 
+const app = express();
+
 
 const config = require('./config/config');
-console.log(`config`, config)
-console.log(`imageurl`, config.imageURL)
-console.log(`backgroundurl`, config.backgroundURL)
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Default HTTPS sport
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -53,7 +52,6 @@ const generateRandomString = (length) => {
 };
 
 const secretKey = generateRandomString(32); // Generate a 32-character random string
-console.log(secretKey);
 
 app.use(session({
     secret: secretKey,
@@ -64,7 +62,7 @@ app.use(session({
 // Default endpoint
 app.get("/", (req, res) => {
     res.send("Deployed");
-  });
+});
 
 app.get("/keycaps", async (req, res) => {
     try {
@@ -419,7 +417,6 @@ app.get("/logs", async (req, res) => {
 });
 
 
-
-app.listen(PORT, () => {
-    console.log(`server is online at ${PORT}`);
+https.createServer({}, app).listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
