@@ -1,5 +1,5 @@
 const express = require("express");
-const https = require("https");
+const app = express();
 const pool = require("./db");
 const cors = require("cors");
 const multer = require("multer");
@@ -12,11 +12,10 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config();
 }
 
-const app = express();
-
 
 const config = require('./config/config');
-const PORT = process.env.PORT || 3000; // Default HTTPS sport
+
+const PORT = process.env.PORT || 3000;
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -62,7 +61,7 @@ app.use(session({
 // Default endpoint
 app.get("/", (req, res) => {
     res.send("Deployed");
-});
+  });
 
 app.get("/keycaps", async (req, res) => {
     try {
@@ -417,6 +416,7 @@ app.get("/logs", async (req, res) => {
 });
 
 
-https.createServer({}, app).listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+
+app.listen(PORT, () => {
+    console.log(`server is online at ${PORT}`);
 });
