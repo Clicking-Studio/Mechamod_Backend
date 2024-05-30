@@ -1,4 +1,5 @@
 const express = require("express");
+const app = express();
 const pool = require("./db");
 const cors = require("cors");
 const multer = require("multer");
@@ -6,7 +7,6 @@ const bodyParser = require("body-parser");
 const session = require('express-session');
 const crypto = require('crypto');
 const { uploadImageOnS3 } = require('./AWS_S3_OPERATIONS/s3FileUploader');
-const https = require('https')
 
 if (process.env.NODE_ENV !== "PRODUCTION") {
     require("dotenv").config();
@@ -16,7 +16,6 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 const config = require('./config/config');
 
 const PORT = process.env.PORT || 3000;
-const app = express();
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -26,7 +25,7 @@ const upload = multer({
 
 // Configure CORS options
 const corsOptions = {
-    origin: ['http://127.0.0.1:5500','https://mechamod-admin.vercel.app', 'https://mechamod-admin-panel.vercel.app'],
+    origin: ['http://127.0.0.1:5500','http://3.142.172.85:8080/','http://3.142.172.85:8080','https://mechamod-admin.vercel.app', 'https://mechamod-admin-panel.vercel.app'],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     optionsSuccessStatus: 200,
     credentials: true
@@ -417,7 +416,7 @@ app.get("/logs", async (req, res) => {
 });
 
 
-// Start HTTPS server
-https.createServer({}, app).listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+
+app.listen(PORT, () => {
+    console.log(`server is online at ${PORT}`);
 });
