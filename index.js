@@ -60,7 +60,7 @@ app.use(session({
 
 // Default endpoint
 app.get("/", (req, res) => {
-    res.send("Deployed");
+    res.send("Deployed to aws");
   });
 
 app.get("/keycaps", async (req, res) => {
