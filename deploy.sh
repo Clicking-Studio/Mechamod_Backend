@@ -1,25 +1,54 @@
 #!/bin/bash
 
-# Replace these variables with your specific details
-INSTANCE_IP="3.142.172.85"        # Public IP or DNS of your EC2 instance
-SSH_KEY="/home/ec2-user/mechamod_backend/Mechamod_Backend/backend.pem"   # Path to your SSH key pair (.pem file)
-APP_DIR="/home/ec2-user/mechamod_backend/Mechamod_Backend"    # Directory path of your Node.js application on EC2
-PM2_APP_NAME="index"           # Name of your PM2 application
+# Define your repository URL
+REPO_URL="https://github.com/Clicking-Studio/Mechamod_Backend.git"
+# Path to your local repository
+LOCAL_REPO_PATH="/home/ec2-user/mechamod_backend/Mechamod_Backend"
 
-# SSH command to connect and execute script on EC2 instance
-ssh -i "$SSH_KEY" ec2-user@$INSTANCE_IP << EOF
-    # Change directory to your Node.js application directory
-    cd $APP_DIR
-    
-    # Pull latest changes from Git repository
-    git pull origin main  # Assuming you're pulling from the 'main' branch
-    
-    # Install dependencies
-    npm install 
-    
-    # Restart PM2 process
-    pm2 delete $PM2_APP_NAME || true
-    pm2 start npm --name $PM2_APP_NAME -- start
-    
-    echo "Deployment completed."
-EOF
+# Name of the branch you want to monitor
+BRANCH_NAME="main"
+
+# Function to check if new commits are available in the specified branch
+check_for_new_commits() {
+    # Move to the local repository directory
+    cd "$LOCAL_REPO_PATH" || exit
+
+    # Fetch latest changes from the remote repository
+    git fetch origin
+
+    # Check if there are new commits in the specified branch
+    LOCAL_HASH=$(git rev-parse "$BRANCH_NAME")
+    REMOTE_HASH=$(git rev-parse "origin/$BRANCH_NAME")
+
+    if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+        echo "New commits detected in $BRANCH_NAME branch"
+        return 0
+    else
+        echo "No new commits in $BRANCH_NAME branch"
+        return 1
+    fi
+}
+
+# Function to fetch latest code and restart pm2
+fetch_and_restart_pm2() {
+    # Move to the local repository directory
+    cd "$LOCAL_REPO_PATH" || exit
+
+    # Pull latest changes from the specified branch
+    git pull origin "$BRANCH_NAME"
+
+    # Restart pm2
+    pm2 restart 0
+}
+
+# Main function
+main() {
+    if check_for_new_commits; then
+        fetch_and_restart_pm2
+    else
+        echo "No action required."
+    fi
+}
+
+# Execute the main function
+main
