@@ -35,7 +35,9 @@ check_for_new_commits() {
 fetch_and_restart_pm2() {
     # Move to the local repository directory
     cd "$LOCAL_REPO_PATH" || exit
-
+    
+    git stash 
+    
     # Pull latest changes from the specified branch
     git pull origin "$BRANCH_NAME"
 
