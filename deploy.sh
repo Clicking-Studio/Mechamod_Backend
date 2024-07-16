@@ -1,4 +1,6 @@
 #!/bin/bash
+# Grant execute permission to the script
+chmod +x "$0"
 
 # Define your repository URL
 REPO_URL="https://github.com/Clicking-Studio/Mechamod_Backend.git"
