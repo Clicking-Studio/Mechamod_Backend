@@ -40,7 +40,7 @@ fetch_and_restart_pm2() {
     git pull origin "$BRANCH_NAME"
 
     # Restart pm2
-    pm2 restart 0
+    pm2 restart 6
 }
 
 # Main function
