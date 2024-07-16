@@ -3,7 +3,7 @@
 # Define your repository URL
 REPO_URL="https://github.com/Clicking-Studio/Mechamod_Backend.git"
 # Path to your local repository
-LOCAL_REPO_PATH="/home/ec2-user/mechamod_backend/Mechamod_Backend"
+LOCAL_REPO_PATH="/home/ec2-user/Mechamod_Backend"
 
 # Name of the branch you want to monitor
 BRANCH_NAME="main"
