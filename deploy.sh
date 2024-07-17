@@ -10,6 +10,9 @@ LOCAL_REPO_PATH="/home/ec2-user/Mechamod_Backend"
 # Name of the branch you want to monitor
 BRANCH_NAME="main"
 
+# Full path to pm2
+PM2_PATH="/root/.nvm/versions/node/v18.16.1/bin/pm2"
+
 # Function to check if new commits are available in the specified branch
 check_for_new_commits() {
     # Move to the local repository directory
@@ -36,13 +39,11 @@ fetch_and_restart_pm2() {
     # Move to the local repository directory
     cd "$LOCAL_REPO_PATH" || exit
     
-    git stash 
-    
     # Pull latest changes from the specified branch
     git pull origin "$BRANCH_NAME"
 
-    # Restart pm2
-    pm2 restart 6
+    # Restart pm2 using the full path
+    $PM2_PATH restart 6
 }
 
 # Main function
