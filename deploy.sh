@@ -1,6 +1,4 @@
 #!/bin/bash
-# Grant execute permission to the script
-# chmod +x "$0"
 
 # Define your repository URL
 REPO_URL="https://github.com/Clicking-Studio/Mechamod_Backend.git"
@@ -12,6 +10,9 @@ BRANCH_NAME="main"
 
 # Full path to pm2
 PM2_PATH="/root/.nvm/versions/node/v18.16.1/bin/pm2"
+
+# Set git pull strategy
+git config --global pull.ff only
 
 # Function to check if new commits are available in the specified branch
 check_for_new_commits() {
@@ -38,7 +39,13 @@ check_for_new_commits() {
 fetch_and_restart_pm2() {
     # Move to the local repository directory
     cd "$LOCAL_REPO_PATH" || exit
-    
+
+    # Check for local changes
+    if ! git diff-index --quiet HEAD --; then
+        echo "Local changes detected. Please commit or discard your changes before pulling."
+        exit 1
+    fi
+
     # Pull latest changes from the specified branch
     git pull origin "$BRANCH_NAME"
 
