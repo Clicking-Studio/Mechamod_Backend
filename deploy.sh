@@ -9,7 +9,7 @@ LOCAL_REPO_PATH="/home/ec2-user/Mechamod_Backend"
 BRANCH_NAME="main"
 
 # Full path to pm2
-PM2_PATH="/root/.nvm/versions/node/v18.16.1/bin/"
+PM2_PATH="/root/.nvm/versions/node/v18.16.1/bin/pm2"
 
 # Function to check if new commits are available in the specified branch
 check_for_new_commits() {
@@ -47,7 +47,7 @@ fetch_and_restart_pm2() {
     git pull origin "$BRANCH_NAME" --no-rebase
 
     # Restart pm2 using the full path
-    $PM2_PATH pm2 restart 6
+    $PM2_PATH restart 6
 }
 
 # Main function
