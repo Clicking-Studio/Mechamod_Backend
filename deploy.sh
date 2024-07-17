@@ -8,8 +8,17 @@ LOCAL_REPO_PATH="/home/ec2-user/Mechamod_Backend"
 # Name of the branch you want to monitor
 BRANCH_NAME="main"
 
-# Full path to pm2
-PM2_PATH="/root/.nvm/versions/node/v18.16.1/bin/pm2"
+# Full path to nvm, node, and pm2 executables
+NVM_DIR="/root/.nvm"
+NODE_PATH="$NVM_DIR/versions/node/v18.16.1/bin/node"
+PM2_PATH="$NVM_DIR/versions/node/v18.16.1/bin/pm2"
+
+# Ensure nvm is loaded
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# Ensure the node and pm2 are in the PATH
+export PATH="$NVM_DIR/versions/node/v18.16.1/bin:$PATH"
 
 # Function to check if new commits are available in the specified branch
 check_for_new_commits() {
