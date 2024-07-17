@@ -11,9 +11,6 @@ BRANCH_NAME="main"
 # Full path to pm2
 PM2_PATH="/root/.nvm/versions/node/v18.16.1/bin/pm2"
 
-# Set git pull strategy
-git config --global pull.ff only
-
 # Function to check if new commits are available in the specified branch
 check_for_new_commits() {
     # Move to the local repository directory
@@ -46,8 +43,8 @@ fetch_and_restart_pm2() {
         exit 1
     fi
 
-    # Pull latest changes from the specified branch
-    git pull origin "$BRANCH_NAME"
+    # Pull latest changes from the specified branch using fast-forward only
+    git pull --ff-only origin "$BRANCH_NAME"
 
     # Restart pm2 using the full path
     $PM2_PATH restart 6
