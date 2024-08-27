@@ -25,7 +25,7 @@ const upload = multer({
 
 // Configure CORS options
 const corsOptions = {
-    origin: ['https://mechamod-admin.vercel.app', 'https://mechamod.vercel.app'],
+    origin: ['https://mechamod-admin.vercel.app', 'https://mechamod.vercel.app', 'http://localhost:5173'],
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     optionsSuccessStatus: 200,
     credentials: true
